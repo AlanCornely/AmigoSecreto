@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteio de Amigo Secreto</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+        }
+        main {
+            display: flex;
+            margin-top: 20px;
+            width: 80%;
+        }
+        .sidebar, .content {
+            padding: 10px;
+            border: 1px solid #ddd;
+            flex: 1;
+        }
+        .sidebar {
+            margin-right: 10px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sorteio de Amigo Secreto</h1>
+    </header>
+    <main>
+        <div class="sidebar">
+            <h2>Adicionar Pessoas</h2>
+            <form id="addPessoaForm">
+                <input type="text" id="nome" placeholder="Nome" required>
+                <button type="submit">Adicionar</button>
+            </form>
+            <h2>Adicionar Restrições</h2>
+            <form id="addRestricaoForm">
+                <input type="text" id="pessoa" placeholder="Pessoa" required>
+                <span>não pode retirar</span>
+                <input type="text" id="restricao" placeholder="Restrição" required>
+                <button type="submit">Adicionar</button>
+            </form>
+            <h3>Pessoas Cadastradas</h3>
+            <ul id="listaPessoas"></ul>
+        </div>
+        <div class="content">
+            <h2>Sorteio</h2>
+            <button id="sortearBtn">Realizar Sorteio</button>
+            <ul id="resultadoSorteio"></ul>
+        </div>
+    </main>
+
+    <script>
+        function atualizarListaPessoas(pessoas) {
+            const lista = $("#listaPessoas");
+            lista.empty();
+            pessoas.forEach(pessoa => {
+                lista.append(`<li>${pessoa}</li>`);
+            });
+        }
+
+        $("#addPessoaForm").on("submit", function(e) {
+            e.preventDefault();
+            const nome = $("#nome").val();
+            $.post("/add_pessoa", { nome: nome }, function(data) {
+                if (data.status === "success") {
+                    atualizarListaPessoas(data.pessoas);
+                    $("#nome").val("");
+                }
+            });
+        });
+
+        $("#addRestricaoForm").on("submit", function(e) {
+            e.preventDefault();
+            const pessoa = $("#pessoa").val();
+            const restricao = $("#restricao").val();
+            $.post("/add_restricao", { pessoa: pessoa, restricao: restricao }, function(data) {
+                if (data.status === "success") {
+                    alert("Restrição adicionada com sucesso!");
+                    $("#pessoa, #restricao").val("");
+                }
+            });
+        });
+
+        $("#sortearBtn").on("click", function() {
+            $.get("/sortear", function(data) {
+                const resultado = $("#resultadoSorteio");
+                resultado.empty();
+                if (data.status === "success") {
+                    for (const [doador, receptor] of Object.entries(data.sorteio)) {
+                        resultado.append(`<li>${doador} -> ${receptor}</li>`);
+                    }
+                } else {
+                    alert(data.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
